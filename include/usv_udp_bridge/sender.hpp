@@ -26,11 +26,6 @@ private:
   std::string receiver_ip_;
 
   uint32_t usv_id_; 
-
-  struct NavigationMsg {
-    uint32_t usv_id;
-    float x, y, psi, u, v, r, w;
-  };
 };
 
 #endif  // SENDOR__SENDOR_HPP_

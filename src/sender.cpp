@@ -2,14 +2,16 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <regex>
+#include <data_struct/data_struct.hpp>
 
 #define PORT 5005
 
 UdpSendor::UdpSendor(const rclcpp::NodeOptions & node_options)
 : Node("udp_sender", node_options)
 {
-  this->declare_parameter<std::string>("receiverIP", "192.168.0.215");
-  this->declare_parameter<std::string>("navigation_topic", "/agent0/navigation_data");
+  // this->declare_parameter<std::string>("receiverIP", "192.168.0.215");
+  this->declare_parameter<std::string>("receiverIP", "172.30.1.56");
+  this->declare_parameter<std::string>("navigation_topic", "/navigation_data");
 
   receiver_ip_ = this->get_parameter("receiverIP").as_string();
   std::string navigation_topic = this->get_parameter("navigation_topic").as_string();
