@@ -1,49 +1,41 @@
-// receiver.cpp
-#include <iostream>
-#include <cstring>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include "usv_udp_bridge/receiver.hpp"
 
-#define PORT 5005
+UdpReceiver::UdpReceiver() {
+  sockfd_ = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sockfd_ < 0) {
+    perror("Socket creation failed");
+    exit(EXIT_FAILURE);
+  }
 
-struct NavigationMsg {
-    float x, y, psi, u, v, r, w;
-};
+  memset(&my_addr_, 0, sizeof(my_addr_));
+  my_addr_.sin_family = AF_INET;
+  my_addr_.sin_port = htons(RECV_PORT);
+  my_addr_.sin_addr.s_addr = INADDR_ANY;
 
-int main() {
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-        perror("Socket creation failed");
-        return -1;
-    }
+  if (bind(sockfd_, (struct sockaddr*)&my_addr_, sizeof(my_addr_)) < 0) {
+    perror("Bind failed");
+    close(sockfd_);
+    exit(EXIT_FAILURE);
+  }
 
-    struct sockaddr_in recv_addr;
-    memset(&recv_addr, 0, sizeof(recv_addr));
+  std::cout << "UDP Receiver initialized on port " << RECV_PORT << std::endl;
+}
 
-    recv_addr.sin_family = AF_INET;
-    recv_addr.sin_port = htons(PORT);
-    recv_addr.sin_addr.s_addr = INADDR_ANY;
+UdpReceiver::~UdpReceiver() {
+  close(sockfd_);
+}
 
-    if (bind(sockfd, (struct sockaddr*)&recv_addr, sizeof(recv_addr)) < 0) {
-        perror("Bind failed");
-        close(sockfd);
-        return -1;
-    }
+// 함수 인자를 참조(&, reference)로 넘김
+// NavigationMsg &nav_msg → 참조로 전달됨 (즉, 복사본이 아님)
+// recvfrom() 함수가 nav_msg에 직접 데이터를 씀
 
-    NavigationMsg nav_msg;
-
-    while (true) {
-        ssize_t received = recv(sockfd, &nav_msg, sizeof(nav_msg), 0);
-        if (received > 0) {
-            std::cout << "Received Navigation Data:" << std::endl;
-            std::cout << "x: " << nav_msg.x << ", y: " << nav_msg.y << ", psi: " << nav_msg.psi << std::endl;
-            std::cout << "u: " << nav_msg.u << ", v: " << nav_msg.v << ", r: " << nav_msg.r << ", w: " << nav_msg.w << std::endl;
-        } else {
-            perror("Receive failed");
-            break;
-        }
-    }
-
-    close(sockfd);
-    return 0;
+bool UdpReceiver::receive(NavigationMsg &nav_msg) {
+  socklen_t addr_len = sizeof(sender_addr_);
+  // recvfrom()는 소켓에서 수신한 데이터를 nav_msg의 메모리 공간에 직접 저장
+  // &nav_msg는 NavigationMsg 구조체의 주소이므로, 해당 주소에 데이터를 복사함.
+  ssize_t len = recvfrom(sockfd_, &nav_msg, sizeof(nav_msg), 0,
+                         (struct sockaddr*)&sender_addr_, &addr_len);
+  // 결과로 nav_msg의 멤버 변수들(usv_id, x, y, psi 등)은 모두 수신된 값으로 갱신
+  //수신된 데이터의 길이(len)가 NavigationMsg 구조체 크기(sizeof(nav_msg))와 동일하면 정상 수신으로 판단
+  return len == sizeof(nav_msg);
 }

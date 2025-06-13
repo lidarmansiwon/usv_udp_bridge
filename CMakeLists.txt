@@ -24,8 +24,16 @@ ament_target_dependencies(udp_sender rclcpp std_msgs mk3_msgs)
 
 
 # UDP receiver executable
-add_executable(udp_receiver src/receiver.cpp)
-ament_target_dependencies(udp_receiver rclcpp std_msgs mk3_msgs)
+# add_executable(udp_receiver src/receiver.cpp)
+# ament_target_dependencies(udp_receiver rclcpp std_msgs mk3_msgs)
+
+add_library(udp_receiver
+  src/receiver.cpp
+)
+
+add_executable(receive_check src/receive_check.cpp)
+
+target_link_libraries(receive_check udp_receiver)
 
 target_include_directories(udp_sender PUBLIC ${INCLUDE_DIRECTORIES})
 target_include_directories(udp_receiver PUBLIC ${INCLUDE_DIRECTORIES})
@@ -33,7 +41,7 @@ target_include_directories(udp_receiver PUBLIC ${INCLUDE_DIRECTORIES})
 # Install executables
 install(TARGETS
   udp_sender
-  udp_receiver
+  receive_check
   DESTINATION lib/${PROJECT_NAME})
 
 # Tests (Optional)
