@@ -5,8 +5,6 @@ int main() {
   UdpReceiver receiver;
   NavigationMsg msg;
 
-  
-
   while (true) {
     if (receiver.receive(msg)) {
       std::cout << "Received nav data (ID " << msg.usv_id << "): ["
